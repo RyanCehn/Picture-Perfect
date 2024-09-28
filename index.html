@@ -30,12 +30,12 @@
           tracker = scaleFactor;
           image.style.transform = `scale(${scaleFactor}) translateY(${translateY}px)`;
       } 
-      else if (window.innerHeight / 5 < scrollPosition < window.innerHeight / 7) {
-        const translateY = scrollPosition / 2;
+      else if (scrollPosition > window.innerHeight / 6 && scrollPosition < window.innerHeight / 6.5 && scrollPosition < window.innerHeight) {
+        const translateY = scrollPosition / 1.5;
         image.style.transform = `scale(${constScale}) translateY(${-translateY}px)`;
       }
       else {
-        const translateY = scrollPosition / 12; 
+        const translateY = scrollPosition / 10; 
         image.style.transform = `scale(${constScale}) translateY(${-translateY}px)`;
       }
     });
