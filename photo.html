@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Picture Perfect - Panorama Upload</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        montserrat: ["Montserrat", "sans-serif"],
+                    },
+                    colors: {
+                        'navy-purple': '#1a1a4a',
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        html, body {
+            overflow-x: hidden;
+            font-family: "Montserrat", sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+        .bkgImageContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        .bkgImage {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.2s ease-out;
+        }
+        .content-container {
+            position: relative;
+            z-index: 10;
+        }
+        .fancy-card {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            padding: 2rem;
+            transform: translateY(50px);
+            opacity: 0;
+            transition: all 0.8s ease-out;
+        }
+        .fancy-card.is-visible {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .icon-float {
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        .upload-area {
+            border: 3px dashed rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .upload-area:hover, .upload-area.dragover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: #fff;
+        }
+        .progress-bar {
+            width: 0;
+            height: 4px;
+            background-color: #4CAF50;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-navy-purple">
+    <div class="bkgImageContainer">
+        <img id="zoomimage" class="bkgImage" src="toronto.jpg" alt="Toronto">
+    </div>
+
+    <div class="content-container">
+        <div class="h-screen flex items-center justify-center px-4 sm:px-0">
+            <div class="fancy-card text-center p-8 w-full max-w-2xl">
+                <i class="fas fa-panorama text-6xl mb-6 text-blue-600 icon-float"></i>
+                <h1 class="text-4xl font-bold mb-4 text-navy-purple">
+                    Upload Your Panorama
+                </h1>
+                <p class="text-xl mb-8 text-navy-purple">Share your wide-angle wonders with the world</p>
+
+                <form id="upload-form" enctype="multipart/form-data"
+                      hx-post="/upload"
+                      hx-encoding="multipart/form-data"
+                      hx-target="#upload-result"
+                      hx-indicator="#progress-container">
+                    <div id="upload-area" class="upload-area mb-4">
+                        <i class="fas fa-cloud-upload-alt text-4xl mb-4 text-navy-purple"></i>
+                        <p class="text-lg mb-2">Drag & Drop your panorama here</p>
+                        <p class="text-sm">or</p>
+                        <label for="file-input" class="cursor-pointer inline-block mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-300">
+                            Select File
+                        </label>
+                        <input id="file-input" name="panoramaFile" type="file" accept="image/*" class="hidden" />
+                    </div>
+
+                    <div id="progress-container" class="hidden">
+                        <div class="progress-bar" id="progress-bar"></div>
+                        <p id="progress-text" class="mt-2">Uploading...</p>
+                    </div>
+
+                    <div id="upload-result" class="mt-4">
+                        <!-- HTMX will replace this content with the server response -->
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const faders = document.querySelectorAll(".fancy-card");
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const uploadForm = document.getElementById('upload-form');
+
+        const appearOptions = {
+            threshold: 0.15,
+            rootMargin: "0px 0px -100px 0px"
+        };
+
+        const appearOnScroll = new IntersectionObserver(function(entries, appearOnScroll) {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) {
+                    return;
+                } else {
+                    entry.target.classList.add("is-visible");
+                    appearOnScroll.unobserve(entry.target);
+                }
+            });
+        }, appearOptions);
+
+        faders.forEach(fader => {
+            appearOnScroll.observe(fader);
+        });
+
+        function updateBackgroundImage() {
+            const scrollPosition = window.pageYOffset;
+            const image = document.getElementById('zoomimage');
+            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+            const scaleFactor = 1 + (scrollPosition / maxScroll) * 0.2;
+            image.style.transform = `scale(${scaleFactor})`;
+        }
+
+        window.addEventListener('load', updateBackgroundImage);
+        window.addEventListener("scroll", updateBackgroundImage);
+        window.addEventListener("resize", updateBackgroundImage);
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        uploadArea.addEventListener('drop', handleDrop, false);
+        fileInput.addEventListener('change', handleFiles, false);
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function highlight() {
+            uploadArea.classList.add('dragover');
+        }
+
+        function unhighlight() {
+            uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        function handleFiles(files) {
+            if (files instanceof Event) {
+                files = files.target.files;
+            }
+            fileInput.files = files;
+            uploadForm.dispatchEvent(new Event('submit', { bubbles: true }));
+        }
+
+        htmx.on('#upload-form', 'htmx:xhr:progress', function(evt) {
+            htmx.find('#progress-bar').style.width = evt.detail.loaded / evt.detail.total * 100 + '%';
+        });
+    </script>
+</body>
+</html>
