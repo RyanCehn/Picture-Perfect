@@ -17,13 +17,28 @@
   </div>
 
   <script>
+    let tracker = 1;
+
     window.addEventListener("scroll", function() {
       const scrollPosition = window.scrollY;
-      const scaleFactor = 1 + scalePosition / 1000;
       const image = document.getElementById('zoomimage');
+      const constScale = tracker;
 
-      image.style.transform = `scale(${scaleFactor})`;
+      if (scrollPosition < window.innerHeight / 1.5) {
+          const translateY = scrollPosition / 2; 
+          const scaleFactor = 1 + scrollPosition / 200;
+          tracker = scaleFactor;
+          image.style.transform = `scale(${scaleFactor}) translateY(${translateY}px)`;
+      } 
+      else if (window.innerHeight / 5 < scrollPosition < window.innerHeight / 7) {
+        const translateY = scrollPosition / 2;
+        image.style.transform = `scale(${constScale}) translateY(${-translateY}px)`;
+      }
+      else {
+        const translateY = scrollPosition / 12; 
+        image.style.transform = `scale(${constScale}) translateY(${-translateY}px)`;
+      }
     });
   </script>
 </body>
-</html>`
+</html>

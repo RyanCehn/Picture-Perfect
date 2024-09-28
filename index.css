@@ -1,3 +1,7 @@
+body {
+    height: 400vh;
+}
+
 .bkgImageContainer {
     display: flex;
     flex-direction: column;
@@ -7,7 +11,11 @@
 }
 
 .bkgImage {
-    z-index: -2;
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    transition: transform 0.2s ease-out;
     background-size: cover;
     background-position: center;
 }
