@@ -1,4 +1,4 @@
-#!/Users/ainuo/Dev/pictureperfect/pp/bin/python3
+#!/Users/ainuo/Dev/Picture-Perfect/pp/bin/python3.12
 # -*- coding: utf-8 -*-
 import re
 import sys
