@@ -1,8 +1,9 @@
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, render_template
 import os
 
 app = Flask(__name__)
 
+# Set the uploads folder
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -22,9 +23,12 @@ def suggestions():
 def upload_file():
     if 'panoramaFile' not in request.files:
         return '<p class="text-red-600">No file part</p>'
+    
     file = request.files['panoramaFile']
+    
     if file.filename == '':
         return '<p class="text-red-600">No selected file</p>'
+    
     if file:
         filename = os.path.join(app.config['UPLOAD_FOLDER'], 'panoPhoto.png')
         file.save(filename)

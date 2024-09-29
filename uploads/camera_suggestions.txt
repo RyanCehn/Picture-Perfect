@@ -1,3 +1,0 @@
-Estimated vanishing point: (36487, 461)
-Suggested camera position: (36487, 165)
-Suggested camera angle: -0.73°
