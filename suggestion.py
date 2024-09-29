@@ -2,12 +2,13 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
-def suggest_camera_position(image_path):
+def suggest_camera_position(image_path, output_file_path):
     """
-    Suggest camera placement based on detected lines in the image.
+    Suggest camera placement based on detected lines in the image and save the results to a text file.
 
     Parameters:
     - image_path: str, path to the input image with detected lines.
+    - output_file_path: str, path to the text file where the results will be written.
     """
     # Step 1: Read the image with lines
     image = cv2.imread(image_path)
@@ -50,10 +51,16 @@ def suggest_camera_position(image_path):
 
         # Step 6: Suggest camera placement based on vanishing point and line analysis
         suggested_position = (vp_x, image.shape[0] // 3)  # Position camera a third from the top
-        suggested_angle = avg_slope
-        print(f"Suggested camera position: {suggested_position}, Suggested angle: {np.degrees(np.arctan(suggested_angle))}°")
+        suggested_angle = np.degrees(np.arctan(avg_slope))  # Convert slope to degrees
+        print(f"Suggested camera position: {suggested_position}, Suggested angle: {suggested_angle:.2f}°")
 
-        # Step 7: Visualize suggestions on the image
+        # Step 7: Write the results to a text file
+        with open(output_file_path, 'w') as file:
+            file.write(f"Estimated vanishing point: {vanishing_point}\n")
+            file.write(f"Suggested camera position: {suggested_position}\n")
+            file.write(f"Suggested camera angle: {suggested_angle:.2f}°\n")
+
+        # Step 8: Visualize suggestions on the image
         result_image = image.copy()
         cv2.circle(result_image, vanishing_point, 10, (0, 255, 0), -1)  # Mark vanishing point
         cv2.putText(result_image, 'Suggested Camera Position', suggested_position, cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
@@ -68,7 +75,11 @@ def suggest_camera_position(image_path):
 
     else:
         print("No lines detected. Unable to suggest camera position.")
+        # Write error message to the file as well
+        with open(output_file_path, 'w') as file:
+            file.write("No lines detected. Unable to suggest camera position.\n")
     
 # Example usage
 input_line_image_path = 'uploads/connected_lines_transparent.png'  # Use the generated image with connected lines
-suggest_camera_position(input_line_image_path)
+output_text_file_path = 'uploads/camera_suggestions.txt'  # Path to the text file
+suggest_camera_position(input_line_image_path, output_text_file_path)
