@@ -3,61 +3,60 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-def draw_and_save_lines(input_image_path, output_image_path, vector_output_path):
-    # Check if the input image exists
-    if not os.path.exists(input_image_path):
-        print(f"Error: The specified input image '{input_image_path}' does not exist.")
-        return
+def connect_dots(image_path, output_path):
+    """
+    Connect dots in an image by detecting dots and drawing lines between them.
     
-    # Step 1: Read the input image
-    image = cv2.imread(input_image_path)
+    Parameters:
+    - image_path: str, path to the input dot image.
+    - output_path: str, path to save the connected line image.
+    """
+    # Step 1: Read the dot image in grayscale
+    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     if image is None:
-        print("Error: Image could not be read. Please check the file path and integrity of the file.")
+        print(f"Error: Unable to read the image at {image_path}.")
         return
     
-    # Step 2: Convert to grayscale
-    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # Step 2: Detect the coordinates of all the dots in the image
+    # Threshold the image to find the dots
+    _, binary_image = cv2.threshold(image, 200, 255, cv2.THRESH_BINARY_INV)
+    
+    # Find contours of the dots
+    contours, _ = cv2.findContours(binary_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    # Extract the center points of each detected dot
+    points = []
+    for contour in contours:
+        M = cv2.moments(contour)
+        if M["m00"] != 0:
+            cX = int(M["m10"] / M["m00"])
+            cY = int(M["m01"] / M["m00"])
+            points.append((cX, cY))
+    
+    # Step 3: Sort points to try and connect in a logical sequence (left-to-right, top-to-bottom)
+    points = sorted(points, key=lambda p: (p[1], p[0]))  # Sort primarily by y-coordinate, then by x-coordinate
 
-    # Step 3: Threshold the image to isolate solid white areas
-    _, binary_image = cv2.threshold(gray_image, 200, 255, cv2.THRESH_BINARY)
+    # Step 4: Create an output image to draw lines connecting the dots
+    line_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
-    # Step 4: Use morphological operations to enhance continuous lines
-    kernel = np.ones((5, 5), np.uint8)
-    cleaned_image = cv2.morphologyEx(binary_image, cv2.MORPH_CLOSE, kernel)  # Closing to fill small gaps
-    dilated_image = cv2.dilate(cleaned_image, kernel, iterations=1)  # Dilation to connect lines further
+    # Step 5: Connect consecutive dots with lines
+    for i in range(len(points) - 1):
+        pt1 = points[i]
+        pt2 = points[i + 1]
+        # Draw a line connecting the current point to the next
+        cv2.line(line_image, pt1, pt2, (0, 0, 255), 2)  # Red line
 
-    # Step 5: Use Canny edge detection to detect edges in the enhanced white areas
-    edges = cv2.Canny(dilated_image, 50, 150, apertureSize=3)
+    # Step 6: Save and display the result
+    cv2.imwrite(output_path, line_image)
 
-    # Step 6: Use Hough Line Transform to detect long and continuous white lines with adjusted parameters
-    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=80, minLineLength=50, maxLineGap=20)
-
-    # Initialize a blank canvas to draw the red lines on the original image
-    red_lines_image = cv2.cvtColor(gray_image, cv2.COLOR_GRAY2BGR)
-
-    # Step 7: Draw and save the detected long and continuous white lines in red
-    with open(vector_output_path, 'w') as file:  # Open the output file to write vectors
-        if lines is not None:
-            for line in lines:
-                x1, y1, x2, y2 = line[0]
-                # Draw lines in red only on the detected solid white areas
-                cv2.line(red_lines_image, (x1, y1), (x2, y2), (0, 0, 255), 2)
-                # Write the line vector coordinates to the file
-                file.write(f"Line: Start({x1}, {y1}) End({x2}, {y2})\n")
-
-    # Save the resulting image with the completed lines in red
-    cv2.imwrite(output_image_path, red_lines_image)
-
-    # Display the image with completed red lines
-    plt.figure(figsize=(12, 8))
-    plt.imshow(cv2.cvtColor(red_lines_image, cv2.COLOR_BGR2RGB))
-    plt.title('Completed Red Lines on Continuous Solid White Areas')
+    plt.figure(figsize=(10, 8))
+    plt.imshow(cv2.cvtColor(line_image, cv2.COLOR_BGR2RGB))
+    plt.title('Connected Dots')
     plt.axis('off')
     plt.show()
 
-# Example usage:
-input_path = 'optimized-lines.png'  # Path to the input image
-output_path = 'uploads/final_completed_lines_red.png'  # Path to save the output image
-vector_output_path = 'uploads/lines_vectors.txt'  # Path to save the line vector data
+# Example usage
+input_dot_image_path = 'uploads/output_dots.png'  # Path to the dot image generated previously
+output_line_image_path = 'uploads/connected_lines.png'  # Output path for the image with connected lines
 
-draw_and_save_lines(input_path, output_path, vector_output_path)
+connect_dots(input_dot_image_path, output_line_image_path)

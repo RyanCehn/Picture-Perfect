@@ -90,4 +90,4 @@ suppressed = non_max_suppression(np.array(magnitude), np.array(direction))
 # Create and save the output image
 output_image = Image.new('1', (width, height))  # Binary image mode
 output_image.putdata(suppressed)
-output_image.save('optimized-lines.png', 'PNG')
+output_image.save('uploads/optimized-lines.png', 'PNG')
